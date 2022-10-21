@@ -1,11 +1,10 @@
+require('dotenv').config()
 const inquirer = require('inquirer');
 const express = require('express');
 const cTable = require('console.table');
 const mysql = require('mysql2');
 const PORT = process.env.PORT || 3001;
 const app = express();
-import * as dotenv from 'dotenv' // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
-dotenv.config()
 
 // Express middleware
 app.use(express.urlencoded({ extended: false }));
@@ -15,15 +14,12 @@ app.use(express.json());
 const db = mysql.createConnection(
   {
     host: 'localhost',
-    user: 'root',
-    password: 'Gold2022##',
-    database: 'hr_db'
+    user: process.env.USERNAME,
+    password: process.env.PASSWORD,
+    database: process.env.DATABASE
   },
 );
 // not sure about this ask TA
-process.env.DATABASE, 
-process.env.USERNAME, 
-process.env.PASSWORD,
 
 //confirm connection
 db.connect(function(error) {
@@ -43,24 +39,24 @@ const answers = inquirer.prompt([
     choices: ['view all departments','view all roles','view all employees','add a department','add a role','add an employee','update an employee role']
   } 
   ]).then(answers); {
-    if(answers == 'view all departments') {
+    if(answers.toDoNext == 'view all departments') {
       viewAllDepartments();
-    } else if (answers =='view all roles') {
+    } else if (answers.toDoNext =='view all roles') {
       viewAllRoles();
-    } else if (answers =='view all employees') {
+    } else if (answers.toDoNext =='view all employees') {
       viewAllEmployees();
-    } else if (answers == 'add a department') {
+    } else if (answers.toDoNext == 'add a department') {
       addDepartment();
-    } else if (answers == 'add a role') {
+    } else if (answers.toDoNext == 'add a role') {
       addRole();
-    } else if (answers == "add an employee") {
+    } else if (answers.toDoNext == "add an employee") {
       addEmployee();
-    } else if (answers == "update an employee role") {
+    } else if (answers.toDoNext == "update an employee role") {
       updateEmployee();
     }
   };
 
-  //VIEW ALL DEPARTMENTS
+//VIEW ALL DEPARTMENTS
 function viewAllDepartments() {
     db.query('SELECT * FROM department', function (err, results) {
       if(err) throw err;
@@ -89,19 +85,39 @@ function addDepartment() {
   inquirer.prompt ([
     {
       type: 'input',
-      name: 'department',
-      message: 'Please enter the name of the department'
+      name: 'name',
+      message: 'Enter department name'
     }
   ]).then(function(answers){
-      db.query('INSERT INTO department VALUES (DEFAULT, ?'), [answers.department], function(err) {
+      db.query('INSERT INTO department VALUES (DEFAULT, ?'), [answers.name], function(err) {
           if(err) throw(err);
-          console.log("Department" + answers.department + "was added to the list");
-      }
+          console.log("Department" + answers.name + "was added to the list");
+      };
     });
   };
 
 //ADD ROLE
 function addRole() {
+  inquirer.prompt ([
+    {
+      type:'input',
+      name: 'title',
+      message: 'Enter role name'
+    },
+    {
+      type: 'number',
+      name: 'salary',
+      message: 'Enter salary'
+    },
+    {
+      type: 'list',
+      name: 'name',
+      message: 'Select department name from list',
+      choices: ['Sales','Engineering','Finance','Legal']
+    }
+  ]).then(function(answers) {
+    db.query('INSERT INTO role SET ?', [])
+  })
 
 };
 
@@ -114,9 +130,6 @@ function addEmployee() {
 function updateEmployee() {
   
 }
-
-
-
 
 
 
