@@ -1,13 +1,21 @@
--- View roles TABLE
+-- DB --
+SELECT hr_db;
+
+-- View roles TABLE --
 SELECT * FROM role;
 
--- View Employee TABLE
+-- View Employee TABLE --
 SELECT * FROM employee;
 
--- View Departments TABLE
+-- View Departments TABLE --
 SELECT * FROM department;
 
--- Add a Role to the Roles TABLE
+-- See TABLE structure --
+DESCRIBE department;
+DESCRIBE role;
+DESCRIBE employee;
+
+-- Add a Role to the Roles TABLE --
 BEGIN;
 INSERT INTO role (title, salary)
     VALUES('Junior Developer','85000');
