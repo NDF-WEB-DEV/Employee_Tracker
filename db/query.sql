@@ -70,6 +70,14 @@ SELECT * FROM employee;
 COMMIT;
 END;
 
+-- RETURNS MANAGERS ONLY
+SELECT CONCAT(manager.first_name, ' ', manager.last_name) AS manager 
+FROM employee 
+JOIN employee manager ON manager.id = employee.manager_id 
+JOIN role ON role.id = employee.role_id 
+JOIN department ON department.id = role.department_id 
+ORDER BY employee.id;
+
 -- Update an employee role --
 BEGIN;
 INSERT INTO role (name)

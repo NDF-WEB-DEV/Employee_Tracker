@@ -164,8 +164,8 @@ function addRole() {
 function addEmployee() {
   db.query('SELECT title FROM role', function (err, results) {
     if(err) throw(err);
-    // db.query('SELECT firstName, lastName, CONCAT(firstName, " ", lastName) AS manager FROM employee WHERE manager_id=NULL', function (err, results) {
-    //   if(err) throw(err);
+  db.query('SELECT CONCAT(manager.first_name, " ", manager.last_name) AS manager FROM employee JOIN employee manager ON manager.id = employee.manager_id JOIN role ON role.id = employee.role_id JOIN department ON department.id = role.department_id ORDER BY employee.id', function (err, results2) {
+      if(err) throw(err);
   inquirer
   .prompt([
     {
@@ -197,20 +197,13 @@ function addEmployee() {
       message: 'Who is the employees manager?',
       choices: 
         function() {
-          db.query('SELECT firstName, lastName, CONCAT(firstName, " ", lastName) AS manager FROM employee WHERE manager_id=NULL', function (err, results) {
-            if(err) throw(err);
           let managerChoices = [];
-          for(i = 0; i < results.length; i++) {
-            managerChoices.push(results[i].manager)
-          }
-        })
+          for(i = 0; i < results2.length; i++) {
+            managerChoices.push(results2[i].manager)
+          };
+          return managerChoices;
+        }
     }
-    // {
-    //   type: 'number',
-    //   name: 'manager_id', 
-    //   message: 'Enter manager ID',
-    //   default: "1"  // if they don't enter a manager it defaults to the index of 1
-    // }
   ]).then(function(answers) {
       //insert query that collects info to add employee
       db.query('INSERT INTO employee SET (DEFAULT,?,?,?,?)', [answers.first_name, answers.last_name, answers.title, answers.manager_id]), (err, results) => {
@@ -224,8 +217,8 @@ function addEmployee() {
       });
     });
   });
-});
-};
+  });
+}
   
 //UPDATE EMPLOYEE
 function updateEmployee() {
@@ -280,7 +273,7 @@ function updateEmployee() {
         });
     });
 });
-  });
+});
 };
 
 // Default response for any other request (Not Found)
