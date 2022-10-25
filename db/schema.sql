@@ -15,7 +15,7 @@ CREATE TABLE role (
     department_id INT,
     FOREIGN KEY (department_id)
     REFERENCES department(id)
-    ON DELETE SET NULL,
+    ON DELETE SET NULL
 );
 
 CREATE TABLE employee (
@@ -28,6 +28,3 @@ CREATE TABLE employee (
     REFERENCES role(id)
     ON DELETE SET NULL
 );
-
--- ALTER TABLE employee ADD CONSTRAINT fk_employee
---     FOREIGN KEY (id) REFERENCES employee(id);

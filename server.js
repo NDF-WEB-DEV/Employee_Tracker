@@ -27,6 +27,7 @@ db.connect(function(error) {
     throw error;
   } else {
     console.log(`Connected to the Human Resources database.`)
+    hrApp();
   }
 });
 
@@ -39,7 +40,7 @@ function hrApp() {
       type: 'list',
       name: 'toDoNext',
       message: 'What would you like to do?',
-      choices: ['view all departments','view all roles','view all employees','add a department','add a role','add an employee','update an employee role']
+      choices: ['view all departments','view all roles','view all employees','add department','add role','add employee','update employee role']
     }
     ]).then(answers => {  //User selects the action they want take in this function
       if(answers.toDoNext == 'view all departments') {
@@ -52,9 +53,9 @@ function hrApp() {
         addDepartment();
       } else if (answers.toDoNext == 'add role') {
         addRole();
-      } else if (answers.toDoNext == "add employee") {
+      } else if (answers.toDoNext == 'add employee') {
         addEmployee();
-      } else if (answers.toDoNext == "update employee role") {
+      } else if (answers.toDoNext == 'update employee role') {
         updateEmployee();
       } else {
         process.exit(true);
@@ -65,15 +66,15 @@ function hrApp() {
 //VIEW ALL DEPARTMENTS
 function viewAllDepartments() {
     db.query('SELECT * FROM department', function (err, results) {
-      if(err) throw err;  // Prints erros if true
+      if(err) throw err;  // Prints errors if true
       console.table(results); // prints results of query
       hrApp();  // calling main app to continue application interaction
   });
 };
 
 //VIEW ALL ROLES
-function viewAllRoles(){
-    db.query('SELECT * FROM role', function (err, results) {  //query to view the complete 'Roles Table'
+function viewAllRoles(){  //Query to view the 'Roles Table' as assignment video 
+    db.query('SELECT role.id, role.title, department.name, role.salary FROM role, department WHERE role.department_id=department.id', function (err, results) {  
       if(err) throw err;  // Prints erros if true
       console.table(results); // prints results of query
       hrApp();  // calling main app to continue application interaction
@@ -81,8 +82,9 @@ function viewAllRoles(){
 };
 
 //VIEW ALL EMPLOYEES
-function viewAllEmployees() {
-  db.query('SELECT * FROM employee', function (err, results) {  //query to view the complete 'Employee Table'
+// Query to view 'Employee Table' as assignment video
+function viewAllEmployees(){
+  db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name, role.salary, CONCAT(manager.first_name, " ", manager.last_name) AS manager FROM employee LEFT JOIN employee manager ON manager.id = employee.manager_id INNER JOIN role ON role.id = employee.role_id INNER JOIN department ON department.id = role.department_id ORDER BY employee.id;', function (err, results) { 
     if(err) throw err;  // Prints erros if true
     console.table(results); // prints results of query
     hrApp();  // calling main app to continue application interaction
@@ -90,26 +92,33 @@ function viewAllEmployees() {
 };
 
 // ADD DEPARTMENT
-function addDepartment() {
-  inquirer.prompt ([
+function addDepartment(){
+    inquirer
+      .prompt([
     {
       type: 'input',
       name: 'name',
       message: 'What is the name of the department?'
     }
   ]).then(function(answers){  //query to insert a new department into the 'Dept. Table'
-      db.query('INSERT INTO department VALUES (DEFAULT, ?)'), [answers.name], (err, results) => {  
+      db.query('INSERT INTO department VALUES (DEFAULT, ?)',(answers.name), function(err){  
         if(err) throw err;  // Prints errors if true
+        console.log("Added " + answers.name + "to the database");  // printing confirmation
+      });
+      db.query('SELECT * FROM department', function (err, results) {
+        if(err) throw err;  // Prints erros if true
         console.table(results); // prints results of query
-        console.log("Added" + answers.name + "to the database");  // printing confirmation
         hrApp();  // calling main app to continue application interaction
-      };
+      });
     });
   };
-
+  
 //ADD ROLE
 function addRole() {
-  inquirer.prompt ([
+  db.query('SELECT name FROM department', function (err, results) {
+    if(err) throw(err);
+  inquirer
+  .prompt ([
     {
       type:'input',
       name: 'title',
@@ -121,10 +130,17 @@ function addRole() {
       message: 'What is the salary of the role?'
     },
     {
-      type: 'list',
+      type: 'rawlist',
       name: 'name',
       message: 'Which department does the role belong to?',
-      choices: ['Sales','Engineering','Finance','Legal'],
+      choices:     // INQUIRER docs -> allows for loops while using rawlist
+        function() {    // Added the for loop to traverse the list to include the latest roles, it was not worrking with the array.
+          let deptChoices = [];
+          for(i = 0; i < results.length; i++) {
+            deptChoices.push(results[i].name)
+          };
+          return deptChoices;
+        }
     },
     {
       type: 'number',
@@ -140,12 +156,16 @@ function addRole() {
       console.table(results); // prints results of query
       console.log("Role" + answers.title + "was added to the list");
       hrApp();
+    });
   });
 });
 };
-
 //ADD EMPLOYEE
 function addEmployee() {
+  db.query('SELECT title FROM role', function (err, results) {
+    if(err) throw(err);
+    // db.query('SELECT firstName, lastName, CONCAT(firstName, " ", lastName) AS manager FROM employee WHERE manager_id=NULL', function (err, results) {
+    //   if(err) throw(err);
   inquirer
   .prompt([
     {
@@ -165,18 +185,32 @@ function addEmployee() {
       choices:     // INQUIRER docs -> allows for loops while using rawlist
         function() {    // Added the for loop to traverse the list to include the latest roles, it was not worrking with the array.
           let titleChoices = [];
-          for(i = 0; i< results.length; i++) {
+          for(i = 0; i < results.length; i++) {
             titleChoices.push(results[i].title)
           };
           return titleChoices;
         }
     },
     {
-      type: 'number',
-      name: 'manager_id', 
-      message: 'Enter manager ID',
-      default: "1"  // if they don't enter a manager it defaults to the index of 1
+      type: 'rawlist',
+      name: 'manager',
+      message: 'Who is the employees manager?',
+      choices: 
+        function() {
+          db.query('SELECT firstName, lastName, CONCAT(firstName, " ", lastName) AS manager FROM employee WHERE manager_id=NULL', function (err, results) {
+            if(err) throw(err);
+          let managerChoices = [];
+          for(i = 0; i < results.length; i++) {
+            managerChoices.push(results[i].manager)
+          }
+        })
     }
+    // {
+    //   type: 'number',
+    //   name: 'manager_id', 
+    //   message: 'Enter manager ID',
+    //   default: "1"  // if they don't enter a manager it defaults to the index of 1
+    // }
   ]).then(function(answers) {
       //insert query that collects info to add employee
       db.query('INSERT INTO employee SET (DEFAULT,?,?,?,?)', [answers.first_name, answers.last_name, answers.title, answers.manager_id]), (err, results) => {
@@ -187,10 +221,12 @@ function addEmployee() {
         console.table(results); // prints results of query
         console.log("Employee" + answers.first_name + answers.last_name + "was added to the list");
         hrApp();
+      });
     });
   });
+});
 };
-
+  
 //UPDATE EMPLOYEE
 function updateEmployee() {
   db.query('SELECT * FROM employee', function (err, results){
@@ -233,9 +269,8 @@ function updateEmployee() {
                 message: 'Enter the employee new manager ID',
                 default: "1"
               }
-
             ]).then(function(answers){  // Updating the employee title
-              db.query(`UPDATE employee SET ? WHERE last_name = ?`, [answers.title, answers.manager_id], empSelected);  
+              db.query('UPDATE employee SET ? WHERE last_name = ?', [answers.title, answers.manager_id], empSelected);  
               db.query('SELECT * FROM employee', function (err, results) {  
                 if(err) throw(err);
                 console.table(results);  // Printing the employee table to see if change took place
@@ -245,7 +280,8 @@ function updateEmployee() {
         });
     });
 });
-});
+  });
+};
 
 // Default response for any other request (Not Found)
 app.use((req, res) => {
@@ -256,4 +292,3 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-}
