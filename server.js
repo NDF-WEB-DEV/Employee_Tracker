@@ -264,10 +264,10 @@ function updateEmployee() {
               }
             ]).then(function(answers){  // Updating the employee title
               db.query('UPDATE employee SET ? WHERE last_name = ?', [answers.title, answers.manager_id], empSelected);  
-              db.query('SELECT * FROM employee', function (err, results) {  
+              db.query('SELECT * FROM employee', function (err) {  
                 if(err) throw(err);
                 console.table(results);  // Printing the employee table to see if change took place
-                console.log("Employee" + empSelected + "title was updated");  // confirmation 
+                console.log("Employee " + empSelected + " title was updated");  // confirmation 
                 hrApp();
             })
         });

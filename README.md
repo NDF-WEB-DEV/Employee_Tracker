@@ -3,6 +3,8 @@
 ### Description
 > #### This is application acts as a CMS for an employee tracker app which can be utilize in a company by the HR department. It manages a company's employee database, using Node.js, Inquirer, and MySQL. Itallows you to view and manage the departments, roles, and employees.
 
+### Video Link
+> [Video Link]()
 ## Table of Contents
 - [Project Name](#project_name)
 - [How to install it](#installation)
